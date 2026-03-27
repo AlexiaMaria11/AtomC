@@ -326,6 +326,17 @@ Token *tokenize(const char *pch){
     }
 }
 
+void freeTokens(Token *tokens) {
+    while (tokens) {
+        Token *next = tokens->next;
+        if (tokens->code == ID || tokens->code == STRING) {
+            free(tokens->text);
+        }
+        free(tokens);
+        tokens = next;
+    }
+}
+
 const char *tokenNames[] = {
     "ID", "TYPE_CHAR", "TYPE_DOUBLE", "ELSE", "IF", "TYPE_INT", "RETURN", "STRUCT", "VOID", "WHILE",
     "COMMA", "END", "SEMICOLON", "LPAR", "RPAR", "LBRACKET", "RBRACKET", "LACC", "RACC",
@@ -362,7 +373,7 @@ void showTokensDebugToFile(const Token *tokens, FILE *out) {
         switch (tk->code) {
             case ID: fprintf(out, ":%s", tk->text); break;
             case INT: fprintf(out, ":%d", tk->i); break;
-            case DOUBLE: fprintf(out, ":%g", tk->d); break;
+            case DOUBLE: fprintf(out, ":%.2f", tk->d); break;
             case CHAR: fprintf(out, ":"); fprintEscapedChar(out, tk->c); break;
             case STRING: fprintf(out, ":"); fprintEscapedString(out, tk->text); break;
         }
@@ -376,7 +387,7 @@ void showTokensToFile(const Token *tokens, FILE *out) {
         switch (tk->code) {
             case ID: fprintf(out, ":%s", tk->text); break;
             case INT: fprintf(out, ":%d", tk->i); break;
-            case DOUBLE: fprintf(out, ":%g", tk->d); break;
+            case DOUBLE: fprintf(out, ":%.2f", tk->d); break;
             case CHAR: fprintf(out, ":%c", tk->c); break;
             case STRING: fprintf(out, ":%s", tk->text); break;
         }
@@ -390,7 +401,7 @@ void showTokens(const Token *tokens) {
         switch (tk->code) {
             case ID: printf(":%s", tk->text); break;
             case INT: printf(":%d", tk->i); break;
-            case DOUBLE: printf(":%g", tk->d); break;
+            case DOUBLE: printf(":%.2f", tk->d); break;
             case CHAR: printf(":%c", tk->c); break;
             case STRING: printf(":%s", tk->text); break;
         }

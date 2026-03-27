@@ -23,6 +23,7 @@ typedef struct Token{
 	}Token;
 
 Token *tokenize(const char *pch);
+void freeTokens(Token *tokens);
 void showTokens(const Token *tokens);
 void showTokensToFile(const Token *tokens, FILE *out);
 void showTokensDebugToFile(const Token *tokens, FILE *out);
