@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include "utils.h"
 #include "lexer.h"
+#include "parser.h"
 
 int main()
 {
@@ -25,6 +26,7 @@ int main()
 	showTokens(tokens);
 	showTokensToFile(tokens, fout);
 	showTokensDebugToFile(tokens, fdebug);
+	parse(tokens);
 	fclose(fout);
 	fclose(fdebug);
 	freeTokens(tokens);
