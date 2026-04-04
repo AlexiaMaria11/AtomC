@@ -344,43 +344,6 @@ const char *tokenNames[] = {
     "INT", "DOUBLE", "CHAR", "STRING"
 };
 
-static void fprintEscapedChar(FILE *out, char c) {
-    switch ((unsigned char)c) {
-        case '\a': fprintf(out, "\\a"); break;
-        case '\b': fprintf(out, "\\b"); break;
-        case '\f': fprintf(out, "\\f"); break;
-        case '\n': fprintf(out, "\\n"); break;
-        case '\r': fprintf(out, "\\r"); break;
-        case '\t': fprintf(out, "\\t"); break;
-        case '\v': fprintf(out, "\\v"); break;
-        case '\\': fprintf(out, "\\\\"); break;
-        case '\'': fprintf(out, "\\'"); break;
-        case '\"': fprintf(out, "\\\""); break;
-        case '\0': fprintf(out, "\\0"); break;
-        default: fputc((unsigned char)c, out); break;
-    }
-}
-
-static void fprintEscapedString(FILE *out, const char *text) {
-    for (; *text; text++) {
-        fprintEscapedChar(out, *text);
-    }
-}
-
-void showTokensDebugToFile(const Token *tokens, FILE *out) {
-    for (const Token *tk = tokens; tk; tk = tk->next) {
-        fprintf(out, "%d\t%s", tk->line, tokenNames[tk->code]);
-        switch (tk->code) {
-            case ID: fprintf(out, ":%s", tk->text); break;
-            case INT: fprintf(out, ":%d", tk->i); break;
-            case DOUBLE: fprintf(out, ":%.2f", tk->d); break;
-            case CHAR: fprintf(out, ":"); fprintEscapedChar(out, tk->c); break;
-            case STRING: fprintf(out, ":"); fprintEscapedString(out, tk->text); break;
-        }
-        fprintf(out, "\n");
-    }
-}
-
 void showTokensToFile(const Token *tokens, FILE *out) {
     for (const Token *tk = tokens; tk; tk = tk->next) {
         fprintf(out, "%d\t%s", tk->line, tokenNames[tk->code]);

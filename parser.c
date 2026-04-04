@@ -27,6 +27,50 @@ bool exprUnary();
 bool exprPostfix();
 bool exprPrimary();
 
+static const char *tokenName(int code){
+	switch(code){
+		case ID:return "ID";
+		case TYPE_CHAR:return "TYPE_CHAR";
+		case TYPE_DOUBLE:return "TYPE_DOUBLE";
+		case ELSE:return "ELSE";
+		case IF:return "IF";
+		case TYPE_INT:return "TYPE_INT";
+		case RETURN:return "RETURN";
+		case STRUCT:return "STRUCT";
+		case VOID:return "VOID";
+		case WHILE:return "WHILE";
+		case COMMA:return "COMMA";
+		case END:return "END";
+		case SEMICOLON:return "SEMICOLON";
+		case LPAR:return "LPAR";
+		case RPAR:return "RPAR";
+		case LBRACKET:return "LBRACKET";
+		case RBRACKET:return "RBRACKET";
+		case LACC:return "LACC";
+		case RACC:return "RACC";
+		case ASSIGN:return "ASSIGN";
+		case EQUAL:return "EQUAL";
+		case ADD:return "ADD";
+		case SUB:return "SUB";
+		case MUL:return "MUL";
+		case DIV:return "DIV";
+		case DOT:return "DOT";
+		case AND:return "AND";
+		case OR:return "OR";
+		case NOT:return "NOT";
+		case NOTEQ:return "NOTEQ";
+		case LESS:return "LESS";
+		case LESSEQ:return "LESSEQ";
+		case GREATER:return "GREATER";
+		case GREATEREQ:return "GREATEREQ";
+		case INT:return "INT";
+		case DOUBLE:return "DOUBLE";
+		case CHAR:return "CHAR";
+		case STRING:return "STRING";
+		default:return "UNKNOWN";
+		}
+	}
+
 void tkerr(const char *fmt,...){
 	fprintf(stderr,"error in line %d: ",iTk->line);
 	va_list va;
@@ -61,6 +105,8 @@ bool typeBase(){
 	if(consume(STRUCT)){
 		if(consume(ID)){
 			return true;
+			}else{
+			tkerr("dupa struct trebuie sa urmeze numele structurii");
 			}
 		}
 	iTk=start;
@@ -74,6 +120,8 @@ bool arrayDecl(){
 		expr();
 		if(consume(RBRACKET)){
 			return true;
+			}else{
+			tkerr("lipseste ] la finalul declararii de tablou");
 			}
 		}
 	iTk=start;
@@ -98,6 +146,8 @@ bool fnParam(){
 		if(consume(ID)){
 			arrayDecl();
 			return true;
+			}else{
+			tkerr("lipseste numele parametrului dupa tip");
 			}
 		}
 	iTk=start;
@@ -112,7 +162,11 @@ bool varDef(){
 			arrayDecl();
 			if(consume(SEMICOLON)){
 				return true;
+				}else{
+				tkerr("lipseste ; dupa declararea variabilei");
 				}
+			}else{
+			tkerr("lipseste numele variabilei dupa tip");
 			}
 		}
 	iTk=start;
@@ -130,6 +184,8 @@ bool stmCompound(){
 			}
 		if(consume(RACC)){
 			return true;
+			}else{
+			tkerr("lipseste } la finalul blocului");
 			}
 		}
 	iTk=start;
@@ -140,18 +196,31 @@ bool stmCompound(){
 bool fnDef(){
 	Token *start=iTk;
 	if(typeBase() || consume(VOID)){
-		if(consume(ID) && consume(LPAR)){
-			if(fnParam()){
-				while(consume(COMMA)){
-					if(!fnParam()){
-						iTk=start;
-						return false;
+		if(consume(ID)){
+			if(consume(LPAR)){
+				if(fnParam()){
+					while(consume(COMMA)){
+						if(!fnParam()){
+							tkerr("dupa , trebuie sa urmeze un parametru valid");
+							}
 						}
 					}
+				if(consume(RPAR)){
+					if(stmCompound()){
+						return true;
+						}else{
+						tkerr("lipseste corpul functiei");
+						}
+					}else{
+					tkerr("lipseste ) dupa lista de parametri");
+					}
+				}else{
+				iTk=start;
+				return false;
 				}
-			if(consume(RPAR) && stmCompound()){
-				return true;
-				}
+			}else{
+			iTk=start;
+			return false;
 			}
 		}
 	iTk=start;
@@ -161,10 +230,25 @@ bool fnDef(){
 //structDef: STRUCT ID LACC varDef* RACC SEMICOLON
 bool structDef(){
 	Token *start=iTk;
-	if(consume(STRUCT) && consume(ID) && consume(LACC)){
-		while(varDef()){}
-		if(consume(RACC) && consume(SEMICOLON)){
-			return true;
+	if(consume(STRUCT)){
+		if(consume(ID)){
+			if(consume(LACC)){
+				while(varDef()){}
+				if(consume(RACC)){
+					if(consume(SEMICOLON)){
+						return true;
+						}else{
+						tkerr("lipseste ; dupa definitia structurii");
+						}
+					}else{
+					tkerr("lipseste } la finalul structurii");
+					}
+				}else{
+				iTk=start;
+				return false;
+				}
+			}else{
+			tkerr("lipseste numele structurii dupa struct");
 			}
 		}
 	iTk=start;
@@ -180,27 +264,51 @@ bool stm(){
 
 	iTk=start;
 	if(consume(IF)){
-		if(consume(LPAR) && expr() && consume(RPAR) && stm()){
-			if(consume(ELSE)){
-				if(stm()){
-					return true;
+		if(consume(LPAR)){
+			if(expr()){
+				if(consume(RPAR)){
+					if(stm()){
+						if(consume(ELSE)){
+							if(stm()){
+								return true;
+								}else{
+								tkerr("lipseste instructiunea dupa else");
+								}
+							}
+						return true;
+						}else{
+						tkerr("lipseste instructiunea dupa if");
+						}
+					}else{
+					tkerr("lipseste ) dupa conditia din if");
 					}
-				iTk=start;
-				return false;
+				}else{
+				tkerr("lipseste expresia de conditie din if");
 				}
-			return true;
+			}else{
+			tkerr("lipseste ( dupa if");
 			}
-		iTk=start;
-		return false;
 		}
 
 	iTk=start;
 	if(consume(WHILE)){
-		if(consume(LPAR) && expr() && consume(RPAR) && stm()){
-			return true;
+		if(consume(LPAR)){
+			if(expr()){
+				if(consume(RPAR)){
+					if(stm()){
+						return true;
+						}else{
+						tkerr("lipseste instructiunea dupa while");
+						}
+					}else{
+					tkerr("lipseste ) dupa conditia din while");
+					}
+				}else{
+				tkerr("lipseste expresia de conditie din while");
+				}
+			}else{
+			tkerr("lipseste ( dupa while");
 			}
-		iTk=start;
-		return false;
 		}
 
 	iTk=start;
@@ -208,13 +316,19 @@ bool stm(){
 		expr();
 		if(consume(SEMICOLON)){
 			return true;
+			}else{
+			tkerr("lipseste ; dupa instructiunea return");
 			}
-		iTk=start;
-		return false;
 		}
 
 	iTk=start;
-	expr();
+	if(expr()){
+		if(consume(SEMICOLON)){
+			return true;
+			}else{
+			tkerr("lipseste ; dupa expresie");
+			}
+		}
 	if(consume(SEMICOLON)){
 		return true;
 		}
@@ -232,9 +346,9 @@ bool exprAssign(){
 		if(consume(ASSIGN)){
 			if(exprAssign()){
 				return true;
+				}else{
+				tkerr("lipseste expresia din partea dreapta a atribuirii");
 				}
-			iTk=start;
-			return false;
 			}
 		}
 	iTk=start;
@@ -246,8 +360,7 @@ bool exprOr(){
 	if(exprAnd()){
 		while(consume(OR)){
 			if(!exprAnd()){
-				iTk=start;
-				return false;
+				tkerr("dupa || trebuie sa urmeze o expresie valida");
 				}
 			}
 		return true;
@@ -261,8 +374,7 @@ bool exprAnd(){
 	if(exprEq()){
 		while(consume(AND)){
 			if(!exprEq()){
-				iTk=start;
-				return false;
+				tkerr("dupa && trebuie sa urmeze o expresie valida");
 				}
 			}
 		return true;
@@ -277,8 +389,7 @@ bool exprEq(){
 		for(;;){
 			if(consume(EQUAL) || consume(NOTEQ)){
 				if(!exprRel()){
-					iTk=start;
-					return false;
+					tkerr("dupa operatorul de egalitate trebuie sa urmeze o expresie valida");
 					}
 				}
 			else break;
@@ -295,8 +406,7 @@ bool exprRel(){
 		for(;;){
 			if(consume(LESS) || consume(LESSEQ) || consume(GREATER) || consume(GREATEREQ)){
 				if(!exprAdd()){
-					iTk=start;
-					return false;
+					tkerr("dupa operatorul relational trebuie sa urmeze o expresie valida");
 					}
 				}
 			else break;
@@ -313,8 +423,7 @@ bool exprAdd(){
 		for(;;){
 			if(consume(ADD) || consume(SUB)){
 				if(!exprMul()){
-					iTk=start;
-					return false;
+					tkerr("dupa + sau - trebuie sa urmeze o expresie valida");
 					}
 				}
 			else break;
@@ -331,8 +440,7 @@ bool exprMul(){
 		for(;;){
 			if(consume(MUL) || consume(DIV)){
 				if(!exprCast()){
-					iTk=start;
-					return false;
+					tkerr("dupa * sau / trebuie sa urmeze o expresie valida");
 					}
 				}
 			else break;
@@ -346,8 +454,16 @@ bool exprMul(){
 bool exprCast(){
 	Token *start=iTk;
 	if(consume(LPAR)){
-		if(typeName() && consume(RPAR) && exprCast()){
-			return true;
+		if(typeName()){
+			if(consume(RPAR)){
+				if(exprCast()){
+					return true;
+					}else{
+					tkerr("lipseste expresia dupa cast");
+					}
+				}else{
+				tkerr("lipseste ) dupa tipul folosit la cast");
+				}
 			}
 		}
 	iTk=start;
@@ -359,9 +475,9 @@ bool exprUnary(){
 	if(consume(SUB) || consume(NOT)){
 		if(exprUnary()){
 			return true;
+			}else{
+			tkerr("lipseste expresia dupa operatorul unar");
 			}
-		iTk=start;
-		return false;
 		}
 	iTk=start;
 	return exprPostfix();
@@ -373,19 +489,23 @@ bool exprPostfix(){
 		for(;;){
 			Token *opStart=iTk;
 			if(consume(LBRACKET)){
-				if(expr() && consume(RBRACKET)){
-					continue;
+				if(expr()){
+					if(consume(RBRACKET)){
+						continue;
+						}else{
+						tkerr("lipseste ] dupa indexarea in tablou");
+						}
+					}else{
+					tkerr("lipseste expresia dintre [ si ]");
 					}
-				iTk=start;
-				return false;
 				}
 			iTk=opStart;
 			if(consume(DOT)){
 				if(consume(ID)){
 					continue;
+					}else{
+					tkerr("lipseste numele campului dupa .");
 					}
-				iTk=start;
-				return false;
 				}
 			iTk=opStart;
 			break;
@@ -404,16 +524,19 @@ bool exprPrimary(){
 			if(expr()){
 				while(consume(COMMA)){
 					if(!expr()){
-						iTk=start;
-						return false;
+						tkerr("dupa , trebuie sa urmeze un argument valid");
 						}
 					}
-				}
-			if(consume(RPAR)){
+				if(consume(RPAR)){
+					return true;
+					}else{
+					tkerr("lipseste ) dupa argumentele functiei");
+					}
+				}else if(consume(RPAR)){
 				return true;
+				}else{
+				tkerr("apel de functie invalid: lipseste argument sau )");
 				}
-			iTk=start;
-			return false;
 			}
 		iTk=afterId;
 		return true;
@@ -426,13 +549,19 @@ bool exprPrimary(){
 
 	iTk=start;
 	if(consume(LPAR)){
-		if(expr() && consume(RPAR)){
-			return true;
+		if(expr()){
+			if(consume(RPAR)){
+				return true;
+				}else{
+				tkerr("lipseste ) dupa expresia dintre paranteze");
+				}
+			}else{
+			tkerr("lipseste expresia dupa (");
 			}
 		}
 	iTk=start;
 	return false;
-}
+	}
 
 // unit: ( structDef | fnDef | varDef )* END
 bool unit(){
@@ -445,6 +574,7 @@ bool unit(){
 	if(consume(END)){
 		return true;
 		}
+	tkerr("token invalid la nivel global: %s",tokenName(iTk->code));
 	return false;
 	}
 
