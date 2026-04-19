@@ -377,6 +377,10 @@ bool exprAssign(){
 	return exprOr();
 	}
 
+// regula initiala:
+//   exprOr: exprOr OR exprAnd | exprAnd
+// transformarea folosita in cod:
+//   exprOr: exprAnd ( OR exprAnd )*
 bool exprOr(){
 	Token *start=iTk;
 	Token *startConsumed=consumedTk;
@@ -393,6 +397,10 @@ bool exprOr(){
 	return false;
 	}
 
+// regula initiala:
+//   exprAnd: exprAnd AND exprEq | exprEq
+// transformarea folosita in cod:
+//   exprAnd: exprEq ( AND exprEq )*
 bool exprAnd(){
 	Token *start=iTk;
 	Token *startConsumed=consumedTk;
@@ -409,6 +417,10 @@ bool exprAnd(){
 	return false;
 	}
 
+// regula initiala:
+//   exprEq: exprEq ( EQUAL | NOTEQ ) exprRel | exprRel
+// transformarea folosita in cod:
+//   exprEq: exprRel ( ( EQUAL | NOTEQ ) exprRel )*
 bool exprEq(){
 	Token *start=iTk;
 	Token *startConsumed=consumedTk;
@@ -428,6 +440,10 @@ bool exprEq(){
 	return false;
 	}
 
+// regula initiala:
+//   exprRel: exprRel ( LESS | LESSEQ | GREATER | GREATEREQ ) exprAdd | exprAdd
+// transformarea folosita in cod:
+//   exprRel: exprAdd ( ( LESS | LESSEQ | GREATER | GREATEREQ ) exprAdd )*
 bool exprRel(){
 	Token *start=iTk;
 	Token *startConsumed=consumedTk;
@@ -447,6 +463,10 @@ bool exprRel(){
 	return false;
 	}
 
+// regula initiala:
+//   exprAdd: exprAdd ( ADD | SUB ) exprMul | exprMul
+// transformarea folosita in cod:
+//   exprAdd: exprMul ( ( ADD | SUB ) exprMul )*
 bool exprAdd(){
 	Token *start=iTk;
 	Token *startConsumed=consumedTk;
@@ -466,6 +486,10 @@ bool exprAdd(){
 	return false;
 	}
 
+// regula initiala:
+//   exprMul: exprMul ( MUL | DIV ) exprCast | exprCast
+// transformarea folosita in cod:
+//   exprMul: exprCast ( ( MUL | DIV ) exprCast )*
 bool exprMul(){
 	Token *start=iTk;
 	Token *startConsumed=consumedTk;
