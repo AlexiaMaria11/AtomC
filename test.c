@@ -1,15 +1,30 @@
-// program de testare a analizorului lexical, v1.1
+struct Pt {
+    int x;
+    int y;
+}; // Eroare 1: Lipsește ';' după definiția structurii
 
-int main()
-{
-	int i;
-	i=0;
-	while(i<10){
-		if(i/2==1)puti(i);
-		i=i+1;
-		}
-	if(4.9==49e-1&&0.49E1==2.45*2.0)puts("yes");
-	putc('\'');
-	puts("pentru \" se foloseste \\\"");	// pentru \n
-	return 0;
-}
+struct Pt points[10]; // Eroare 2: Lipsește ';' după declararea variabilei globale
+
+double max(double a, double b){ // Eroare 3: Lipsește virgula între parametri
+    if (a > b) return a; // Eroare 4: Lipsesc parantezele obligatorii la 'if'
+        else return b;
+    }
+
+int len(char s[ ]){
+    int i;
+    i = 0;
+    while(s[i]) { // Eroare 5: Lipsește închiderea parantezei de la 'while'
+        i = i + 1;
+    }
+    return i;
+    }
+
+void main(){
+    int i;
+    i = 10;
+    while(i != 0){ // Eroare 6: Cuvânt cheie scris greșit ('whle' în loc de 'while')
+        puti(i); // Eroare 7: Lipsește ';' după apelul funcției
+        i = i /2 ; // Eroare 8: Expresie incompletă după operatorul de împărțire
+        }
+	}
+    // Eroare 9: Lipsește acolada de închidere a funcției main
