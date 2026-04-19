@@ -542,6 +542,10 @@ bool exprUnary(){
 	return exprPostfix();
 	}
 
+// regula initiala:
+//   exprPostfix: exprPostfix LBRACKET expr RBRACKET | exprPostfix DOT ID | exprPrimary
+// transformarea folosita in cod:
+//   exprPostfix: exprPrimary ( LBRACKET expr RBRACKET | DOT ID )*
 bool exprPostfix(){
 	Token *start=iTk;
 	Token *startConsumed=consumedTk;
