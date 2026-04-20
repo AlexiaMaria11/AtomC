@@ -357,10 +357,12 @@ bool stm(){
 	return false;
 	}
 
+//expr: exprAssign
 bool expr(){
 	return exprAssign();
 	}
 
+//exprAssign: exprUnary ASSIGN exprAssign | exprOr
 bool exprAssign(){
 	Token *start=iTk;
 	Token *startConsumed=consumedTk;
