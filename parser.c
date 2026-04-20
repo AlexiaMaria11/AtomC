@@ -509,6 +509,7 @@ bool exprMul(){
 	return false;
 	}
 
+//exprCast: LPAR typeBase arrayDecl? RPAR exprCast | exprUnary
 bool exprCast(){
 	Token *start=iTk;
 	Token *startConsumed=consumedTk;
@@ -528,6 +529,7 @@ bool exprCast(){
 	return exprUnary();
 	}
 
+//exprUnary: ( SUB | NOT ) exprUnary | exprPostfix
 bool exprUnary(){
 	Token *start=iTk;
 	Token *startConsumed=consumedTk;
@@ -581,6 +583,8 @@ bool exprPostfix(){
 	return false;
 	}
 
+//exprPrimary: ID ( LPAR ( expr ( COMMA expr )* )? RPAR )?
+//| INT | DOUBLE | CHAR | STRING | LPAR expr RPAR
 bool exprPrimary(){
 	Token *start=iTk;
 	Token *startConsumed=consumedTk;
