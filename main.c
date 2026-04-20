@@ -18,6 +18,7 @@ int main()
 	showTokens(tokens);
 	showTokensToFile(tokens, fout);
 	parse(tokens);
+	printf("Codul a fost scris corect.\n");
 	fclose(fout);
 	freeTokens(tokens);
 	free(text);

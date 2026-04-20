@@ -22,9 +22,9 @@ int len(char s[ ]){
 void main(){
     int i;
     i = 10;
-    while(i != 0){ // Eroare 6: Cuvânt cheie scris greșit ('whle' în loc de 'while')
+    while(i != 0){
         puti(i); // Eroare 7: Lipsește ';' după apelul funcției
-        i = i /2 ; // Eroare 8: Expresie incompletă după operatorul de împărțire
+        i = i / 2; // Eroare 8: Expresie incompletă după operatorul de împărțire
         }
-	}
+}
     // Eroare 9: Lipsește acolada de închidere a funcției main

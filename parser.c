@@ -82,7 +82,7 @@ const char *tkCodeName(int code){
 	}
 
 void tkerr(const char *fmt,...){
-	fprintf(stderr,"error in line %d: ",errLine(iTk));
+	fprintf(stderr,"eroare la linia %d: ",errLine(iTk));
 	va_list va;
 	va_start(va,fmt);
 	vfprintf(stderr,fmt,va);
@@ -92,7 +92,7 @@ void tkerr(const char *fmt,...){
 	}
 
 void tkerrAt(const Token *tk,const char *fmt,...){
-	fprintf(stderr,"error in line %d: ",errLine(tk));
+	fprintf(stderr,"eroare la linia %d: ",errLine(tk));
 	va_list va;
 	va_start(va,fmt);
 	vfprintf(stderr,fmt,va);
@@ -130,7 +130,7 @@ bool typeBase(){
 		if(consume(ID)){
 			return true;
 			}
-		tkerr("dupa struct trebuie sa urmeze numele structurii");
+		tkerr("lipseste numele structurii dupa struct");
 		}
 	iTk=start;
 	consumedTk=startConsumed;
@@ -146,7 +146,7 @@ bool arrayDecl(){
 		if(consume(RBRACKET)){
 			return true;
 			}
-		tkerr("lipseste ] la finalul declararii de tablou");
+		tkerr("lipseste ] in declaratia de tablou");
 		}
 	iTk=start;
 	consumedTk=startConsumed;
@@ -192,7 +192,7 @@ bool varDef(){
 			if(consume(SEMICOLON)){
 				return true;
 				}
-			tkerrAt(consumedTk,"lipseste ; dupa declararea variabilei");
+			tkerrAt(consumedTk,"lipseste ; dupa declaratia variabilei");
 			}
 		tkerr("lipseste numele variabilei dupa tip");
 		}
@@ -214,7 +214,7 @@ bool stmCompound(){
 		if(consume(RACC)){
 			return true;
 			}
-		tkerrAt(consumedTk,"lipseste } la finalul blocului");
+		tkerrAt(consumedTk,"lipseste } la sfarsitul blocului");
 		}
 	iTk=start;
 	consumedTk=startConsumed;
@@ -231,7 +231,7 @@ bool fnDef(){
 				if(fnParam()){
 					while(consume(COMMA)){
 						if(!fnParam()){
-							tkerr("dupa , trebuie sa urmeze un parametru valid");
+							tkerr("parametru invalid dupa , in lista de parametri");
 							}
 						}
 					}
@@ -239,9 +239,9 @@ bool fnDef(){
 					if(stmCompound()){
 						return true;
 						}
-					tkerr("lipseste corpul functiei");
+					tkerr("lipseste corpul functiei dupa antet");
 					}
-				tkerrAt(consumedTk,"lipseste ) dupa lista de parametri");
+				tkerrAt(consumedTk,"lista de parametri invalida sau lipseste )");
 				}
 			iTk=start;
 			consumedTk=startConsumed;
@@ -267,7 +267,7 @@ bool structDef(){
 						}
 					tkerrAt(consumedTk,"lipseste ; dupa definitia structurii");
 					}
-				tkerrAt(consumedTk,"lipseste } la finalul structurii");
+				tkerrAt(consumedTk,"lipseste } la sfarsitul definitiei structurii");
 				}
 			iTk=start;
 			consumedTk=startConsumed;
@@ -303,11 +303,11 @@ bool stm(){
 							}
 						return true;
 						}
-					tkerr("lipseste instructiunea dupa if");
+					tkerr("lipseste instructiunea dupa conditia if");
 					}
-				tkerr("lipseste ) dupa conditia din if");
+				tkerr("conditie invalida pentru if sau lipseste )");
 				}
-			tkerr("lipseste expresia de conditie din if");
+			tkerr("lipseste conditia din if");
 			}
 		tkerr("lipseste ( dupa if");
 		}
@@ -321,11 +321,11 @@ bool stm(){
 					if(stm()){
 						return true;
 						}
-					tkerr("lipseste instructiunea dupa while");
+					tkerr("lipseste instructiunea dupa conditia while");
 					}
-				tkerr("lipseste ) dupa conditia din while");
+				tkerr("conditie invalida pentru while sau lipseste )");
 				}
-			tkerr("lipseste expresia de conditie din while");
+			tkerr("lipseste conditia din while");
 			}
 		tkerr("lipseste ( dupa while");
 		}
@@ -337,7 +337,7 @@ bool stm(){
 		if(consume(SEMICOLON)){
 			return true;
 			}
-		tkerrAt(consumedTk,"lipseste ; dupa instructiunea return");
+		tkerrAt(consumedTk,"lipseste ; dupa return");
 		}
 
 	iTk=start;
@@ -346,7 +346,7 @@ bool stm(){
 		if(consume(SEMICOLON)){
 			return true;
 			}
-		tkerrAt(consumedTk,"lipseste ; dupa expresie");
+		tkerrAt(consumedTk,"instructiune expresie invalida sau lipseste ;");
 		}
 	if(consume(SEMICOLON)){
 		return true;
@@ -371,7 +371,7 @@ bool exprAssign(){
 			if(exprAssign()){
 				return true;
 				}
-			tkerr("lipseste expresia din partea dreapta a atribuirii");
+			tkerr("lipseste expresia din dreapta operatorului =");
 			}
 		}
 	iTk=start;
@@ -389,7 +389,7 @@ bool exprOr(){
 	if(exprAnd()){
 		while(consume(OR)){
 			if(!exprAnd()){
-				tkerr("dupa || trebuie sa urmeze o expresie valida");
+				tkerr("lipseste o expresie valida dupa ||");
 				}
 			}
 		return true;
@@ -409,7 +409,7 @@ bool exprAnd(){
 	if(exprEq()){
 		while(consume(AND)){
 			if(!exprEq()){
-				tkerr("dupa && trebuie sa urmeze o expresie valida");
+				tkerr("lipseste o expresie valida dupa &&");
 				}
 			}
 		return true;
@@ -428,9 +428,14 @@ bool exprEq(){
 	Token *startConsumed=consumedTk;
 	if(exprRel()){
 		for(;;){
-			if(consume(EQUAL) || consume(NOTEQ)){
+			if(consume(EQUAL)){
 				if(!exprRel()){
-					tkerr("dupa operatorul de egalitate trebuie sa urmeze o expresie valida");
+					tkerr("lipseste o expresie valida dupa ==");
+					}
+				}
+			else if(consume(NOTEQ)){
+				if(!exprRel()){
+					tkerr("lipseste o expresie valida dupa !=");
 					}
 				}
 			else break;
@@ -451,9 +456,24 @@ bool exprRel(){
 	Token *startConsumed=consumedTk;
 	if(exprAdd()){
 		for(;;){
-			if(consume(LESS) || consume(LESSEQ) || consume(GREATER) || consume(GREATEREQ)){
+			if(consume(LESS)){
 				if(!exprAdd()){
-					tkerr("dupa operatorul relational trebuie sa urmeze o expresie valida");
+					tkerr("lipseste o expresie valida dupa <");
+					}
+				}
+			else if(consume(LESSEQ)){
+				if(!exprAdd()){
+					tkerr("lipseste o expresie valida dupa <=");
+					}
+				}
+			else if(consume(GREATER)){
+				if(!exprAdd()){
+					tkerr("lipseste o expresie valida dupa >");
+					}
+				}
+			else if(consume(GREATEREQ)){
+				if(!exprAdd()){
+					tkerr("lipseste o expresie valida dupa >=");
 					}
 				}
 			else break;
@@ -474,9 +494,14 @@ bool exprAdd(){
 	Token *startConsumed=consumedTk;
 	if(exprMul()){
 		for(;;){
-			if(consume(ADD) || consume(SUB)){
+			if(consume(ADD)){
 				if(!exprMul()){
-					tkerr("dupa + sau - trebuie sa urmeze o expresie valida");
+					tkerr("lipseste o expresie valida dupa +");
+					}
+				}
+			else if(consume(SUB)){
+				if(!exprMul()){
+					tkerr("lipseste o expresie valida dupa -");
 					}
 				}
 			else break;
@@ -497,9 +522,14 @@ bool exprMul(){
 	Token *startConsumed=consumedTk;
 	if(exprCast()){
 		for(;;){
-			if(consume(MUL) || consume(DIV)){
+			if(consume(MUL)){
 				if(!exprCast()){
-					tkerr("dupa * sau / trebuie sa urmeze o expresie valida");
+					tkerr("lipseste o expresie valida dupa *");
+					}
+				}
+			else if(consume(DIV)){
+				if(!exprCast()){
+					tkerr("lipseste o expresie valida dupa /");
 					}
 				}
 			else break;
@@ -521,9 +551,9 @@ bool exprCast(){
 				if(exprCast()){
 					return true;
 					}
-				tkerr("lipseste expresia dupa cast");
+				tkerr("lipseste expresia dupa conversia de tip");
 				}
-			tkerr("lipseste ) dupa tipul folosit la cast");
+			tkerr("conversie de tip invalida sau lipseste )");
 			}
 		}
 	iTk=start;
@@ -535,11 +565,17 @@ bool exprCast(){
 bool exprUnary(){
 	Token *start=iTk;
 	Token *startConsumed=consumedTk;
-	if(consume(SUB) || consume(NOT)){
+	if(consume(SUB)){
 		if(exprUnary()){
 			return true;
 			}
-		tkerr("lipseste expresia dupa operatorul unar");
+		tkerr("lipseste expresia dupa -");
+		}
+	if(consume(NOT)){
+		if(exprUnary()){
+			return true;
+			}
+		tkerr("lipseste expresia dupa !");
 		}
 	iTk=start;
 	consumedTk=startConsumed;
@@ -562,7 +598,7 @@ bool exprPostfix(){
 					if(consume(RBRACKET)){
 						continue;
 						}
-					tkerr("lipseste ] dupa indexarea in tablou");
+					tkerr("index de tablou invalid sau lipseste ]");
 					}
 				tkerr("lipseste expresia dintre [ si ]");
 				}
@@ -597,19 +633,19 @@ bool exprPrimary(){
 			if(expr()){
 				while(consume(COMMA)){
 					if(!expr()){
-						tkerr("dupa , trebuie sa urmeze un argument valid");
+						tkerr("argument invalid dupa ,");
 						}
 					}
 				if(consume(RPAR)){
 					return true;
 					}
-				tkerrAt(consumedTk,"lipseste ) dupa argumentele functiei");
+				tkerrAt(consumedTk,"lista de argumente invalida sau lipseste )");
 				}
 			else if(consume(RPAR)){
 				return true;
 				}
 			else{
-				tkerrAt(consumedTk,"lipseste ) dupa apelul functiei");
+				tkerrAt(consumedTk,"apel de functie invalid sau lipseste )");
 				}
 			}
 		iTk=afterId;
@@ -630,7 +666,7 @@ bool exprPrimary(){
 			if(consume(RPAR)){
 				return true;
 				}
-			tkerrAt(consumedTk,"lipseste ) dupa expresia dintre paranteze");
+			tkerrAt(consumedTk,"expresie invalida intre paranteze sau lipseste )");
 			}
 		tkerr("lipseste expresia dupa (");
 		}
