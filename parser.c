@@ -142,7 +142,9 @@ bool arrayDecl(){
 	Token *start=iTk;
 	Token *startConsumed=consumedTk;
 	if(consume(LBRACKET)){
-		consume(INT);
+		if(!consume(INT) && iTk->code!=RBRACKET){
+			tkerr("dimensiunea tabloului trebuie sa fie constanta intreaga sau vida");
+			}
 		if(consume(RBRACKET)){
 			return true;
 			}
@@ -214,7 +216,10 @@ bool stmCompound(){
 		if(consume(RACC)){
 			return true;
 			}
-		tkerrAt(consumedTk,"lipseste } la sfarsitul blocului");
+		if(iTk->code==END){
+			tkerrAt(consumedTk,"lipseste } la sfarsitul blocului");
+			}
+		tkerr("instructiune invalida in bloc sau lipseste }");
 		}
 	iTk=start;
 	consumedTk=startConsumed;
@@ -225,7 +230,8 @@ bool stmCompound(){
 bool fnDef(){
 	Token *start=iTk;
 	Token *startConsumed=consumedTk;
-	if(typeBase() || consume(VOID)){
+	bool isVoid=false;
+	if(typeBase() || (isVoid=consume(VOID))){
 		if(consume(ID)){
 			if(consume(LPAR)){
 				if(fnParam()){
@@ -243,9 +249,15 @@ bool fnDef(){
 					}
 				tkerrAt(consumedTk,"lista de parametri invalida sau lipseste )");
 				}
+			if(isVoid){
+				tkerrAt(consumedTk,"tipul void poate fi folosit doar la functii; lipseste ( dupa numele functiei");
+				}
 			iTk=start;
 			consumedTk=startConsumed;
 			return false;
+			}
+		if(isVoid){
+			tkerr("lipseste numele functiei dupa void");
 			}
 		}
 	iTk=start;
@@ -267,7 +279,10 @@ bool structDef(){
 						}
 					tkerrAt(consumedTk,"lipseste ; dupa definitia structurii");
 					}
-				tkerrAt(consumedTk,"lipseste } la sfarsitul definitiei structurii");
+				if(iTk->code==END){
+					tkerrAt(consumedTk,"lipseste } la sfarsitul definitiei structurii");
+					}
+				tkerr("declaratie invalida in structura sau lipseste }");
 				}
 			iTk=start;
 			consumedTk=startConsumed;
