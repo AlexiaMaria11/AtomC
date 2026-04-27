@@ -2,14 +2,19 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include "parser.h"
+#include "ad.h"
 
 Token *iTk;		// the iterator in the tokens list
 Token *consumedTk;		// the last consumed token
+Symbol *currentStruct=NULL;		// !=NULL while parsing a struct body
+Symbol *currentFn=NULL;		// !=NULL while parsing a function body
 
-bool arrayDecl();
-bool typeName();
+bool arrayDecl(Type *t);
+bool typeBase(Type *t);
+bool typeName(Type *t);
 bool fnParam();
 bool fnDef();
 bool stm();
@@ -33,6 +38,64 @@ bool exprUnary();
 bool exprPostfix();
 bool exprPostfixPrim();
 bool exprPrimary();
+void tkerrAt(const Token *tk,const char *fmt,...);
+
+static Type makeType(TypeBase tb){
+	Type t;
+	t.tb=tb;
+	t.s=NULL;
+	t.n=-1;
+	return t;
+	}
+
+static void addExtFns(){
+	Type t=makeType(TB_VOID);
+	addExtFn("puti",NULL,t);
+	addExtFn("putd",NULL,t);
+	addExtFn("putc",NULL,t);
+	addExtFn("puts",NULL,t);
+	t=makeType(TB_INT);
+	addExtFn("geti",NULL,t);
+	t=makeType(TB_DOUBLE);
+	addExtFn("getd",NULL,t);
+	t=makeType(TB_CHAR);
+	addExtFn("getc",NULL,t);
+	}
+
+static Symbol *findSymbolInList(Symbol *list,const char *name){
+	for(Symbol *s=list;s;s=s->next){
+		if(!strcmp(s->name,name))return s;
+		}
+	return NULL;
+	}
+
+static void addVarSymbol(Token *nameTk,Type type){
+	if(currentStruct){
+		if(findSymbolInList(currentStruct->structMembers,nameTk->text)){
+			tkerrAt(nameTk,"simbol redefinit: %s",nameTk->text);
+			}
+		Symbol *var=newSymbol(nameTk->text,SK_VAR);
+		var->type=type;
+		var->owner=currentStruct;
+		var->varIdx=symbolsLen(currentStruct->structMembers);
+		addSymbolToList(&currentStruct->structMembers,var);
+		return;
+		}
+	if(findSymbolInDomain(symTable,nameTk->text)){
+		tkerrAt(nameTk,"simbol redefinit: %s",nameTk->text);
+		}
+	Symbol *var=newSymbol(nameTk->text,SK_VAR);
+	var->type=type;
+	var->owner=currentFn;
+	if(currentFn){
+		var->varIdx=symbolsLen(currentFn->fn.locals);
+		addSymbolToList(&currentFn->fn.locals,dupSymbol(var));
+		}
+	else{
+		var->varMem=calloc(1,typeSize(&type));
+		}
+	addSymbolToDomain(symTable,var);
+	}
 
 static int errLine(const Token *tk){
 	if(tk){
@@ -121,20 +184,29 @@ bool consume(int code){
 	}
 
 // typeBase: TYPE_INT | TYPE_DOUBLE | TYPE_CHAR | STRUCT ID
-bool typeBase(){
+bool typeBase(Type *t){
 	Token *start=iTk;
 	Token *startConsumed=consumedTk;
 	if(consume(TYPE_INT)){
+		*t=makeType(TB_INT);
 		return true;
 		}
 	if(consume(TYPE_DOUBLE)){
+		*t=makeType(TB_DOUBLE);
 		return true;
 		}
 	if(consume(TYPE_CHAR)){
+		*t=makeType(TB_CHAR);
 		return true;
 		}
 	if(consume(STRUCT)){
 		if(consume(ID)){
+			Symbol *s=findSymbol(consumedTk->text);
+			if(!s || s->kind!=SK_STRUCT){
+				tkerrAt(consumedTk,"structura nedefinita: %s",consumedTk->text);
+				}
+			*t=makeType(TB_STRUCT);
+			t->s=s;
 			return true;
 			}
 		tkerr("lipseste numele structurii dupa struct");
@@ -145,11 +217,15 @@ bool typeBase(){
 	}
 
 // arrayDecl: LBRACKET INT? RBRACKET
-bool arrayDecl(){
+bool arrayDecl(Type *t){
 	Token *start=iTk;
 	Token *startConsumed=consumedTk;
 	if(consume(LBRACKET)){
-		if(!consume(INT) && iTk->code!=RBRACKET){
+		t->n=0;
+		if(consume(INT)){
+			t->n=consumedTk->i;
+			}
+		else if(iTk->code!=RBRACKET){
 			tkerr("dimensiunea tabloului trebuie sa fie constanta intreaga sau vida");
 			}
 		if(consume(RBRACKET)){
@@ -163,11 +239,11 @@ bool arrayDecl(){
 	}
 
 // typeName: typeBase arrayDecl?
-bool typeName(){
+bool typeName(Type *t){
 	Token *start=iTk;
 	Token *startConsumed=consumedTk;
-	if(typeBase()){
-		arrayDecl();
+	if(typeBase(t)){
+		arrayDecl(t);
 		return true;
 		}
 	iTk=start;
@@ -179,9 +255,20 @@ bool typeName(){
 bool fnParam(){
 	Token *start=iTk;
 	Token *startConsumed=consumedTk;
-	if(typeBase()){
+	Type type;
+	if(typeBase(&type)){
 		if(consume(ID)){
-			arrayDecl();
+			Token *nameTk=consumedTk;
+			arrayDecl(&type);
+			if(findSymbolInDomain(symTable,nameTk->text)){
+				tkerrAt(nameTk,"parametru redefinit: %s",nameTk->text);
+				}
+			Symbol *param=newSymbol(nameTk->text,SK_PARAM);
+			param->type=type;
+			param->owner=currentFn;
+			param->paramIdx=symbolsLen(currentFn->fn.params);
+			addSymbolToList(&currentFn->fn.params,dupSymbol(param));
+			addSymbolToDomain(symTable,param);
 			return true;
 			}
 		tkerr("lipseste numele parametrului dupa tip");
@@ -195,10 +282,13 @@ bool fnParam(){
 bool varDef(){
 	Token *start=iTk;
 	Token *startConsumed=consumedTk;
-	if(typeBase()){
+	Type type;
+	if(typeBase(&type)){
 		if(consume(ID)){
-			arrayDecl();
+			Token *nameTk=consumedTk;
+			arrayDecl(&type);
 			if(consume(SEMICOLON)){
+				addVarSymbol(nameTk,type);
 				return true;
 				}
 			tkerrAt(consumedTk,"lipseste ; dupa declaratia variabilei");
@@ -215,12 +305,14 @@ bool stmCompound(){
 	Token *start=iTk;
 	Token *startConsumed=consumedTk;
 	if(consume(LACC)){
+		pushDomain();
 		for(;;){
 			if(varDef()){}
 			else if(stm()){}
 			else break;
 			}
 		if(consume(RACC)){
+			dropDomain();
 			return true;
 			}
 		if(iTk->code==END){
@@ -238,9 +330,23 @@ bool fnDef(){
 	Token *start=iTk;
 	Token *startConsumed=consumedTk;
 	bool isVoid=false;
-	if(typeBase() || (isVoid=consume(VOID))){
+	Type retType;
+	if(typeBase(&retType) || (isVoid=consume(VOID))){
+		if(isVoid){
+			retType=makeType(TB_VOID);
+			}
 		if(consume(ID)){
+			Token *nameTk=consumedTk;
 			if(consume(LPAR)){
+				if(findSymbolInDomain(symTable,nameTk->text)){
+					tkerrAt(nameTk,"simbol redefinit: %s",nameTk->text);
+					}
+				Symbol *oldFn=currentFn;
+				Symbol *fn=newSymbol(nameTk->text,SK_FN);
+				fn->type=retType;
+				addSymbolToDomain(symTable,fn);
+				currentFn=fn;
+				pushDomain();
 				if(fnParam()){
 					while(consume(COMMA)){
 						if(!fnParam()){
@@ -250,6 +356,8 @@ bool fnDef(){
 					}
 				if(consume(RPAR)){
 					if(stmCompound()){
+						dropDomain();
+						currentFn=oldFn;
 						return true;
 						}
 					tkerr("lipseste corpul functiei dupa antet");
@@ -278,10 +386,21 @@ bool structDef(){
 	Token *startConsumed=consumedTk;
 	if(consume(STRUCT)){
 		if(consume(ID)){
+			Token *nameTk=consumedTk;
 			if(consume(LACC)){
+				if(findSymbolInDomain(symTable,nameTk->text)){
+					tkerrAt(nameTk,"simbol redefinit: %s",nameTk->text);
+					}
+				Symbol *oldStruct=currentStruct;
+				Symbol *s=newSymbol(nameTk->text,SK_STRUCT);
+				s->type=makeType(TB_STRUCT);
+				s->type.s=s;
+				addSymbolToDomain(symTable,s);
+				currentStruct=s;
 				while(varDef()){}
 				if(consume(RACC)){
 					if(consume(SEMICOLON)){
+						currentStruct=oldStruct;
 						return true;
 						}
 					tkerrAt(consumedTk,"lipseste ; dupa definitia structurii");
@@ -599,7 +718,8 @@ bool exprCast(){
 	Token *start=iTk;
 	Token *startConsumed=consumedTk;
 	if(consume(LPAR)){
-		if(typeName()){
+		Type type;
+		if(typeName(&type)){
 			if(consume(RPAR)){
 				if(exprCast()){
 					return true;
@@ -677,9 +797,17 @@ bool exprPrimary(){
 	Token *start=iTk;
 	Token *startConsumed=consumedTk;
 	if(consume(ID)){
+		Token *nameTk=consumedTk;
+		Symbol *s=findSymbol(nameTk->text);
+		if(!s){
+			tkerrAt(nameTk,"simbol nedefinit: %s",nameTk->text);
+			}
 		Token *afterId=iTk;
 		Token *afterIdConsumed=consumedTk;
 		if(consume(LPAR)){
+			if(s->kind!=SK_FN){
+				tkerrAt(nameTk,"%s nu este functie",nameTk->text);
+				}
 			if(expr()){
 				while(consume(COMMA)){
 					if(!expr()){
@@ -743,5 +871,9 @@ bool unit(){
 void parse(Token *tokens){
 	iTk=tokens;
 	consumedTk=NULL;
+	pushDomain();
+	addExtFns();
 	unit();
+	showDomain(symTable,"global");
+	dropDomain();
 	}
