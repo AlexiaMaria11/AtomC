@@ -3,6 +3,7 @@
 #include "utils.h"
 #include "lexer.h"
 #include "parser.h"
+#include "ad.h"
 
 int main()
 {
@@ -15,9 +16,12 @@ int main()
 		err("unable to open tokens-output.txt for writing");
 	}
 
-	showTokens(tokens);
+	//showTokens(tokens);
 	showTokensToFile(tokens, fout);
+	pushDomain();
 	parse(tokens);
+	showDomain(symTable, "global");
+	dropDomain();
 	printf("Codul a fost scris corect.\n");
 	fclose(fout);
 	freeTokens(tokens);
