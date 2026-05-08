@@ -1,30 +1,19 @@
-int x;
-char y;
-double z;
-double p[100];
-
-struct S1{
-	int i;
-	double d[2];
-	char x;
+struct S{
+	int n;
+	char text[16];
 	};
-struct S1 p1;
-struct S1 vp[10];
-
-double sum(double x[5],int n){
-	double r;
-	int i;
-	r=0;
-	i=0;
-	while(i<n){
-		double n;
-		n=x[i];
-		r=r+n;
-		i=i+1;
-		}
-	return r;
-	}
 	
-void f(struct S1 p){
-	puti(p.i);
+struct S a;
+struct S v[10];
+
+void f(char text[],int i,char ch){
+	text[i]=ch;
+	}
+
+int h(int x,int y){
+	if(x>0&&x<y){
+		f(v[x].text,y,'#');
+		return 1;
+		}
+	return 0;
 	}

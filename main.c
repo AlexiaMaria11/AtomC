@@ -20,7 +20,7 @@ int main()
 	showTokensToFile(tokens, fout);
 	pushDomain();
 	parse(tokens);
-	showDomain(symTable, "global");
+	//showDomain(symTable, "global");
 	dropDomain();
 	printf("Codul a fost scris corect.\n");
 	fclose(fout);
