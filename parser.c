@@ -60,6 +60,23 @@ static Ret makeBaseRet(TypeBase tb,bool lval,bool ct){
 	return makeRet(makeType(tb),lval,ct);
 	}
 
+static bool startsTypeName(Token *tk){
+	if(!tk)return false;
+	switch(tk->code){
+		case TYPE_INT:
+		case TYPE_DOUBLE:
+		case TYPE_CHAR:
+		case STRUCT:
+			return true;
+		default:
+			return false;
+		}
+	}
+
+static bool startsWithTypeCast(){
+	return iTk->code==LPAR && startsTypeName(iTk->next);
+	}
+
 static void addVarSymbol(Token *nameTk,Type type){
 	Symbol *var=findSymbolInDomain(symTable,nameTk->text);
 	if(var){
@@ -538,7 +555,7 @@ bool exprAssign(Ret *r){
 	Token *start=iTk;
 	Token *startConsumed=consumedTk;
 	Ret rDst;
-	if(exprUnary(&rDst)){
+	if(!startsWithTypeCast() && exprUnary(&rDst)){
 		if(consume(ASSIGN)){
 			if(exprAssign(r)){
 				if(!rDst.lval){

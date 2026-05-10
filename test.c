@@ -1,19 +1,14 @@
-struct S{
-	int n;
-	char text[16];
-	};
-	
-struct S a;
-struct S v[10];
-
-void f(char text[],int i,char ch){
-	text[i]=ch;
+int f(int x,double y,char c){
+	int r;
+	double d;
+	r=x||c;
+	r=x&&c;
+	r=x==c;
+	r=x<y;
+	d=x+y*2.0;
+	return r;
 	}
 
-int h(int x,int y){
-	if(x>0&&x<y){
-		f(v[x].text,y,'#');
-		return 1;
-		}
-	return 0;
+int main(){
+	return f(1,2.0,'a');
 	}

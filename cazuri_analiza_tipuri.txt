@@ -1,0 +1,363 @@
+// Caz 01 - IF: conditia trebuie sa fie scalara.
+// Eroare asteptata: the if condition must be a scalar value
+struct S{
+	int x;
+	};
+
+int main(){
+	struct S s;
+	if(s)return 1;
+	return 0;
+	}
+
+// Caz 02 - WHILE: conditia trebuie sa fie scalara.
+// Eroare asteptata: the while condition must be a scalar value
+int main(){
+	int v[3];
+	while(v)return 1;
+	return 0;
+	}
+
+// Caz 03 - RETURN: expresia returnata trebuie sa fie scalara.
+// Eroare asteptata: the return value must be a scalar value
+struct S{
+	int x;
+	};
+
+int main(){
+	struct S s;
+	return s;
+	}
+
+// Caz 04 - RETURN: functiile void nu pot returna o valoare.
+// Eroare asteptata: a void function cannot return a value
+void main(){
+	return 1;
+	}
+
+// Caz 05 - RETURN: functiile non-void trebuie sa returneze o valoare.
+// Eroare asteptata: a non-void function must return a value
+int main(){
+	return;
+	}
+
+// Caz 06 - RETURN: tipul expresiei returnate trebuie sa fie convertibil la tipul functiei.
+// Eroare asteptata: cannot convert the return expression type to the function return type
+struct S{
+	int x;
+	};
+
+struct S makeS(){
+	return 1;
+	}
+
+// Caz 07 - ATRIBUIRE: destinatia trebuie sa fie left-value.
+// Eroare asteptata: the assign destination must be a left-value
+int main(){
+	1=2;
+	return 0;
+	}
+
+// Caz 08 - ATRIBUIRE: destinatia nu trebuie sa fie constanta.
+// Eroare asteptata: the assign destination cannot be constant
+int main(){
+	int v[3];
+	v=1;
+	return 0;
+	}
+
+// Caz 09 - ATRIBUIRE: destinatia trebuie sa fie scalara.
+// Eroare asteptata: the assign destination must be scalar
+struct S{
+	int x;
+	};
+
+int main(){
+	struct S s;
+	s=1;
+	return 0;
+	}
+
+// Caz 10 - ATRIBUIRE: sursa trebuie sa fie scalara.
+// Eroare asteptata: the assign source must be scalar
+int main(){
+	int x;
+	int v[3];
+	x=v;
+	return 0;
+	}
+
+// Caz 11 - ATRIBUIRE: sursa trebuie sa fie convertibila la destinatie.
+// Observatie: in implementarea actuala, scalarurile int/char/double sunt toate convertibile intre ele,
+// iar structurile/vectorii sunt respinsi mai devreme de verificarile de scalar/constanta.
+// De aceea nu exista un caz AtomC simplu care sa ajunga izolat la mesajul:
+// the assign source cannot be converted to destination
+
+// Caz 12 - OR logic: ambii operanzi trebuie sa fie scalari si sa nu fie structuri.
+// Eroare asteptata: invalid operand type for ||
+struct S{
+	int x;
+	};
+
+int main(){
+	struct S s;
+	return s||1;
+	}
+
+// Caz 13 - AND logic: ambii operanzi trebuie sa fie scalari si sa nu fie structuri.
+// Eroare asteptata: invalid operand type for &&
+struct S{
+	int x;
+	};
+
+int main(){
+	struct S s;
+	return s&&1;
+	}
+
+// Caz 14 - Egalitate: ambii operanzi trebuie sa fie scalari si sa nu fie structuri.
+// Eroare asteptata: invalid operand type for ==
+struct S{
+	int x;
+	};
+
+int main(){
+	struct S s;
+	return s==s;
+	}
+
+// Caz 15 - Diferit: ambii operanzi trebuie sa fie scalari si sa nu fie structuri.
+// Eroare asteptata: invalid operand type for !=
+struct S{
+	int x;
+	};
+
+int main(){
+	struct S s;
+	return s!=s;
+	}
+
+// Caz 16 - Relational: ambii operanzi trebuie sa fie scalari si sa nu fie structuri.
+// Eroare asteptata: invalid operand type for <
+struct S{
+	int x;
+	};
+
+int main(){
+	struct S s;
+	return s<1;
+	}
+
+// Caz 17 - Adunare: ambii operanzi trebuie sa fie scalari si sa nu fie structuri.
+// Eroare asteptata: invalid operand type for +
+struct S{
+	int x;
+	};
+
+int main(){
+	struct S s;
+	return s+1;
+	}
+
+// Caz 18 - Scadere: ambii operanzi trebuie sa fie scalari si sa nu fie structuri.
+// Eroare asteptata: invalid operand type for -
+struct S{
+	int x;
+	};
+
+int main(){
+	struct S s;
+	return s-1;
+	}
+
+// Caz 19 - Inmultire: ambii operanzi trebuie sa fie scalari si sa nu fie structuri.
+// Eroare asteptata: invalid operand type for *
+struct S{
+	int x;
+	};
+
+int main(){
+	struct S s;
+	return s*1;
+	}
+
+// Caz 20 - Impartire: ambii operanzi trebuie sa fie scalari si sa nu fie structuri.
+// Eroare asteptata: invalid operand type for /
+struct S{
+	int x;
+	};
+
+int main(){
+	struct S s;
+	return s/1;
+	}
+
+// Caz 21 - CAST: tipul la care se converteste nu poate fi structura.
+// Eroare asteptata: cannot convert to a struct type
+struct S{
+	int x;
+	};
+
+int main(){
+	return (struct S)1;
+	}
+
+// Caz 22 - CAST: o structura nu se poate converti.
+// Eroare asteptata: cannot convert a struct
+struct S{
+	int x;
+	};
+
+int main(){
+	struct S s;
+	return (int)s;
+	}
+
+// Caz 23 - CAST: un array se poate converti doar la alt array.
+// Eroare asteptata: an array can be converted only to another array
+int main(){
+	int v[3];
+	return (int)v;
+	}
+
+// Caz 24 - CAST: un scalar se poate converti doar la alt scalar.
+// Eroare asteptata: a scalar can be converted only to another scalar
+int main(){
+	int x;
+	x=(int[3])1;
+	return 0;
+	}
+
+// Caz 25 - Minus unar: operandul trebuie sa fie scalar.
+// Eroare asteptata: unary - or ! must have a scalar operand
+struct S{
+	int x;
+	};
+
+int main(){
+	struct S s;
+	return -s;
+	}
+
+// Caz 26 - NOT unar: operandul trebuie sa fie scalar, iar rezultatul este int.
+// Eroare asteptata: unary - or ! must have a scalar operand
+struct S{
+	int x;
+	};
+
+int main(){
+	struct S s;
+	return !s;
+	}
+
+// Caz 27 - Indexare: doar un array poate fi indexat.
+// Eroare asteptata: only an array can be indexed
+int main(){
+	int x;
+	return x[0];
+	}
+
+// Caz 28 - Indexare: indexul trebuie sa fie convertibil la int.
+// Eroare asteptata: the index is not convertible to int
+struct S{
+	int x;
+	};
+
+int main(){
+	int v[3];
+	struct S s;
+	return v[s];
+	}
+
+// Caz 29 - Selectie camp: operatorul . se aplica doar structurilor.
+// Eroare asteptata: a field can only be selected from a struct
+int main(){
+	int x;
+	return x.y;
+	}
+
+// Caz 30 - Selectie camp: campul cerut trebuie sa existe in structura.
+// Eroare asteptata: the structure S does not have a field y
+struct S{
+	int x;
+	};
+
+int main(){
+	struct S s;
+	return s.y;
+	}
+
+// Caz 31 - ID: identificatorul trebuie sa existe in tabela de simboluri.
+// Eroare asteptata: undefined id: lipseste
+int main(){
+	return lipseste;
+	}
+
+// Caz 32 - Apel functie: doar functiile pot fi apelate.
+// Eroare asteptata: only a function can be called
+int x;
+
+int main(){
+	return x();
+	}
+
+// Caz 33 - Functie folosita fara apel: o functie poate fi doar apelata.
+// Eroare asteptata: a function can only be called
+int f(){
+	return 1;
+	}
+
+int main(){
+	return f;
+	}
+
+// Caz 34 - Apel functie: prea multe argumente fata de lista de parametri.
+// Eroare asteptata: too many arguments in function call
+int f(int x){
+	return x;
+	}
+
+int main(){
+	return f(1,2);
+	}
+
+// Caz 35 - Apel functie: prea putine argumente fata de lista de parametri.
+// Eroare asteptata: too few arguments in function call
+int f(int x,int y){
+	return x;
+	}
+
+int main(){
+	return f(1);
+	}
+
+// Caz 36 - Apel functie: tipul argumentului trebuie sa fie convertibil la tipul parametrului.
+// Eroare asteptata: in call, cannot convert the argument type to the parameter type
+struct S{
+	int x;
+	};
+
+int f(struct S s){
+	return 0;
+	}
+
+int main(){
+	return f(1);
+	}
+
+// Caz 37 - Caz valid: combinatii scalare acceptate, rezultate int pentru ||, &&, ==, <.
+// Eroare asteptata: niciuna, codul ar trebui acceptat.
+int f(int x,double y,char c){
+	int r;
+	double d;
+	r=x||c;
+	r=x&&c;
+	r=x==c;
+	r=x<y;
+	d=x+y*2.0;
+	return r;
+	}
+
+int main(){
+	return f(1,2.0,'a');
+	}
