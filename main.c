@@ -4,6 +4,7 @@
 #include "lexer.h"
 #include "parser.h"
 #include "ad.h"
+#include "vm.h"
 
 int main()
 {
@@ -19,8 +20,11 @@ int main()
 	//showTokens(tokens);
 	showTokensToFile(tokens, fout);
 	pushDomain();
+	vmInit();
 	parse(tokens);
 	//showDomain(symTable, "global");
+	Instr *testCode=genTestProgramDouble();
+	run(testCode);
 	dropDomain();
 	printf("Codul a fost scris corect.\n");
 	fclose(fout);

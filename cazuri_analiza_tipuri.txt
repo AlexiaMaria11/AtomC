@@ -137,7 +137,7 @@ int main(){
 	return s!=s;
 	}
 
-// Caz 16 - Relational: ambii operanzi trebuie sa fie scalari si sa nu fie structuri.
+// Caz 16 - Mai mic: ambii operanzi trebuie sa fie scalari si sa nu fie structuri.
 // Eroare asteptata: invalid operand type for <
 struct S{
 	int x;
@@ -148,7 +148,40 @@ int main(){
 	return s<1;
 	}
 
-// Caz 17 - Adunare: ambii operanzi trebuie sa fie scalari si sa nu fie structuri.
+// Caz 17 - Mai mic sau egal: ambii operanzi trebuie sa fie scalari si sa nu fie structuri.
+// Eroare asteptata: invalid operand type for <=
+struct S{
+	int x;
+	};
+
+int main(){
+	struct S s;
+	return s<=1;
+	}
+
+// Caz 18 - Mai mare: ambii operanzi trebuie sa fie scalari si sa nu fie structuri.
+// Eroare asteptata: invalid operand type for >
+struct S{
+	int x;
+	};
+
+int main(){
+	struct S s;
+	return s>1;
+	}
+
+// Caz 19 - Mai mare sau egal: ambii operanzi trebuie sa fie scalari si sa nu fie structuri.
+// Eroare asteptata: invalid operand type for >=
+struct S{
+	int x;
+	};
+
+int main(){
+	struct S s;
+	return s>=1;
+	}
+
+// Caz 20 - Adunare: ambii operanzi trebuie sa fie scalari si sa nu fie structuri.
 // Eroare asteptata: invalid operand type for +
 struct S{
 	int x;
@@ -159,7 +192,7 @@ int main(){
 	return s+1;
 	}
 
-// Caz 18 - Scadere: ambii operanzi trebuie sa fie scalari si sa nu fie structuri.
+// Caz 21 - Scadere: ambii operanzi trebuie sa fie scalari si sa nu fie structuri.
 // Eroare asteptata: invalid operand type for -
 struct S{
 	int x;
@@ -170,7 +203,7 @@ int main(){
 	return s-1;
 	}
 
-// Caz 19 - Inmultire: ambii operanzi trebuie sa fie scalari si sa nu fie structuri.
+// Caz 22 - Inmultire: ambii operanzi trebuie sa fie scalari si sa nu fie structuri.
 // Eroare asteptata: invalid operand type for *
 struct S{
 	int x;
@@ -181,7 +214,7 @@ int main(){
 	return s*1;
 	}
 
-// Caz 20 - Impartire: ambii operanzi trebuie sa fie scalari si sa nu fie structuri.
+// Caz 23 - Impartire: ambii operanzi trebuie sa fie scalari si sa nu fie structuri.
 // Eroare asteptata: invalid operand type for /
 struct S{
 	int x;
@@ -192,7 +225,7 @@ int main(){
 	return s/1;
 	}
 
-// Caz 21 - CAST: tipul la care se converteste nu poate fi structura.
+// Caz 24 - CAST: tipul la care se converteste nu poate fi structura.
 // Eroare asteptata: cannot convert to a struct type
 struct S{
 	int x;
@@ -202,7 +235,7 @@ int main(){
 	return (struct S)1;
 	}
 
-// Caz 22 - CAST: o structura nu se poate converti.
+// Caz 25 - CAST: o structura nu se poate converti.
 // Eroare asteptata: cannot convert a struct
 struct S{
 	int x;
@@ -213,14 +246,14 @@ int main(){
 	return (int)s;
 	}
 
-// Caz 23 - CAST: un array se poate converti doar la alt array.
+// Caz 26 - CAST: un array se poate converti doar la alt array.
 // Eroare asteptata: an array can be converted only to another array
 int main(){
 	int v[3];
 	return (int)v;
 	}
 
-// Caz 24 - CAST: un scalar se poate converti doar la alt scalar.
+// Caz 27 - CAST: un scalar se poate converti doar la alt scalar.
 // Eroare asteptata: a scalar can be converted only to another scalar
 int main(){
 	int x;
@@ -228,8 +261,8 @@ int main(){
 	return 0;
 	}
 
-// Caz 25 - Minus unar: operandul trebuie sa fie scalar.
-// Eroare asteptata: unary - or ! must have a scalar operand
+// Caz 28 - Minus unar: operandul trebuie sa fie scalar.
+// Eroare asteptata: unary - must have a scalar operand
 struct S{
 	int x;
 	};
@@ -239,8 +272,8 @@ int main(){
 	return -s;
 	}
 
-// Caz 26 - NOT unar: operandul trebuie sa fie scalar, iar rezultatul este int.
-// Eroare asteptata: unary - or ! must have a scalar operand
+// Caz 29 - NOT unar: operandul trebuie sa fie scalar, iar rezultatul este int.
+// Eroare asteptata: unary ! must have a scalar operand
 struct S{
 	int x;
 	};
@@ -250,14 +283,14 @@ int main(){
 	return !s;
 	}
 
-// Caz 27 - Indexare: doar un array poate fi indexat.
+// Caz 30 - Indexare: doar un array poate fi indexat.
 // Eroare asteptata: only an array can be indexed
 int main(){
 	int x;
 	return x[0];
 	}
 
-// Caz 28 - Indexare: indexul trebuie sa fie convertibil la int.
+// Caz 31 - Indexare: indexul trebuie sa fie convertibil la int.
 // Eroare asteptata: the index is not convertible to int
 struct S{
 	int x;
@@ -269,14 +302,14 @@ int main(){
 	return v[s];
 	}
 
-// Caz 29 - Selectie camp: operatorul . se aplica doar structurilor.
+// Caz 32 - Selectie camp: operatorul . se aplica doar structurilor.
 // Eroare asteptata: a field can only be selected from a struct
 int main(){
 	int x;
 	return x.y;
 	}
 
-// Caz 30 - Selectie camp: campul cerut trebuie sa existe in structura.
+// Caz 33 - Selectie camp: campul cerut trebuie sa existe in structura.
 // Eroare asteptata: the structure S does not have a field y
 struct S{
 	int x;
@@ -287,13 +320,13 @@ int main(){
 	return s.y;
 	}
 
-// Caz 31 - ID: identificatorul trebuie sa existe in tabela de simboluri.
+// Caz 34 - ID: identificatorul trebuie sa existe in tabela de simboluri.
 // Eroare asteptata: undefined id: lipseste
 int main(){
 	return lipseste;
 	}
 
-// Caz 32 - Apel functie: doar functiile pot fi apelate.
+// Caz 35 - Apel functie: doar functiile pot fi apelate.
 // Eroare asteptata: only a function can be called
 int x;
 
@@ -301,7 +334,7 @@ int main(){
 	return x();
 	}
 
-// Caz 33 - Functie folosita fara apel: o functie poate fi doar apelata.
+// Caz 36 - Functie folosita fara apel: o functie poate fi doar apelata.
 // Eroare asteptata: a function can only be called
 int f(){
 	return 1;
@@ -311,7 +344,7 @@ int main(){
 	return f;
 	}
 
-// Caz 34 - Apel functie: prea multe argumente fata de lista de parametri.
+// Caz 37 - Apel functie: prea multe argumente fata de lista de parametri.
 // Eroare asteptata: too many arguments in function call
 int f(int x){
 	return x;
@@ -321,7 +354,7 @@ int main(){
 	return f(1,2);
 	}
 
-// Caz 35 - Apel functie: prea putine argumente fata de lista de parametri.
+// Caz 38 - Apel functie: prea putine argumente fata de lista de parametri.
 // Eroare asteptata: too few arguments in function call
 int f(int x,int y){
 	return x;
@@ -331,7 +364,7 @@ int main(){
 	return f(1);
 	}
 
-// Caz 36 - Apel functie: tipul argumentului trebuie sa fie convertibil la tipul parametrului.
+// Caz 39 - Apel functie: tipul argumentului trebuie sa fie convertibil la tipul parametrului.
 // Eroare asteptata: in call, cannot convert the argument type to the parameter type
 struct S{
 	int x;
@@ -345,7 +378,7 @@ int main(){
 	return f(1);
 	}
 
-// Caz 37 - Caz valid: combinatii scalare acceptate, rezultate int pentru ||, &&, ==, <.
+// Caz 40 - Caz valid: combinatii scalare acceptate, rezultate int pentru ||, &&, ==, !=, <, <=, >, >= si !.
 // Eroare asteptata: niciuna, codul ar trebui acceptat.
 int f(int x,double y,char c){
 	int r;
@@ -353,7 +386,13 @@ int f(int x,double y,char c){
 	r=x||c;
 	r=x&&c;
 	r=x==c;
+	r=x!=c;
 	r=x<y;
+	r=x<=y;
+	r=y>x;
+	r=y>=x;
+	r=!x;
+	d=-y;
 	d=x+y*2.0;
 	return r;
 	}

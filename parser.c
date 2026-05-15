@@ -892,7 +892,7 @@ bool exprUnary(Ret *r){
 	if(consume(SUB)){
 		if(exprUnary(r)){
 			if(!canBeScalar(r)){
-				tkerr("unary - or ! must have a scalar operand");
+				tkerr("unary - must have a scalar operand");
 				}
 			r->lval=false;
 			r->ct=true;
@@ -903,7 +903,7 @@ bool exprUnary(Ret *r){
 	if(consume(NOT)){
 		if(exprUnary(r)){
 			if(!canBeScalar(r)){
-				tkerr("unary - or ! must have a scalar operand");
+				tkerr("unary ! must have a scalar operand");
 				}
 			r->type=makeType(TB_INT);
 			r->lval=false;
