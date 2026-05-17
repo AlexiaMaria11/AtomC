@@ -41,9 +41,9 @@ typedef union{
 	int i;			// int and index values
 	double f;		// float values
 	void *p;		// pointers
-	void(*extFnPtr)();		// pointer to an extern (host) function
+	void(*extFnPtr)(void);		// pointer to an extern (host) function
 	Instr *instr;		// pointer to an instruction
-	}Val;
+	} Val;
 
 // a VM instruction
 struct Instr{

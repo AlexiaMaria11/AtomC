@@ -26,7 +26,7 @@ int main()
 	Instr *testCode=genTestProgramDouble();
 	run(testCode);
 	dropDomain();
-	printf("Codul a fost scris corect.\n");
+	printf("\nCodul a fost scris corect.\n");
 	fclose(fout);
 	freeTokens(tokens);
 	free(text);

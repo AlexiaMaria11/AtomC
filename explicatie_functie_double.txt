@@ -1,5 +1,3 @@
-Programul AtomC modelat in genTestProgramDouble:
-
 f(2.0);
 
 void f(double n){
@@ -12,34 +10,23 @@ void f(double n){
 
 Apelul functiei in codul MV:
 
-OP_PUSH_F 2.0
-	Pune pe stiva argumentul functiei, adica valoarea double n=2.0.
+OP_PUSH_F 2.0 - Pune pe stiva argumentul functiei, adica valoarea double n=2.0.
 
-OP_CALL adresa_f
-	Pune pe stiva adresa de revenire, apoi sare la prima instructiune a functiei f.
+OP_CALL adresa_f - Pune pe stiva adresa de revenire, apoi sare la prima instructiune a functiei f.
 
-OP_HALT
-	Este instructiunea la care se revine dupa terminarea functiei f.
+OP_HALT - Este instructiunea la care se revine dupa terminarea functiei f.
 
 Cadrul functiei:
 
 n[-2] ret[-1] oldFP[0] i[1]
 
-n[-2]
-	Parametrul primit de functie. Pentru apelul f(2.0), aici se afla valoarea 2.0.
+n[-2] - Parametrul primit de functie. Pentru apelul f(2.0), aici se afla valoarea 2.0.
 
-ret[-1]
-	Adresa de revenire salvata de OP_CALL. Dupa terminarea functiei, executia continua de aici.
+ret[-1] - Adresa de revenire salvata de OP_CALL. Dupa terminarea functiei, executia continua de aici.
 
-oldFP[0]
-	Valoarea vechiului FP, salvata de OP_ENTER, ca sa poata fi restaurata la iesirea din functie.
+oldFP[0] - Valoarea vechiului FP, salvata de OP_ENTER, ca sa poata fi restaurata la iesirea din functie.
 
-i[1]
-	Variabila locala double i. OP_ENTER 1 rezerva o celula pentru ea, apoi codul pune 0.0 in FP[1].
-
-Ce este linia LESS.i din exemplul initial:
-
-000001A211A52080/6 LESS.i // 1<2 -> 1
+i[1] - Variabila locala double i. OP_ENTER 1 rezerva o celula pentru ea, apoi codul pune 0.0 in FP[1].
 
 000001A211A52080
 	Este adresa din memorie a instructiunii curente. Aceasta adresa poate fi diferita la fiecare rulare.
@@ -52,10 +39,6 @@ LESS.i
 
 // 1<2 -> 1
 	Comentariul arata calculul efectiv. Deoarece 1<2 este adevarat, rezultatul depus inapoi pe stiva este 1.
-
-Pentru functia cu double trebuie aceeasi idee, dar cu instructiunea pentru double:
-
-000001A211A52080/6 LESS.f // 1.5<2 -> 1
 
 In genTestProgramDouble, conditia while(i<n) este generata astfel:
 
@@ -81,4 +64,5 @@ Ce inseamna RET_VOID 1:
 
 RET_VOID arata ca functia nu returneaza o valoare, fiind void.
 Argumentul 1 inseamna ca functia are un singur parametru pe stiva: n.
-La executie, RET_VOID 1 restaureaza IP din ret[-1], restaureaza FP din oldFP[0] si coboara SP astfel incat parametrul, adresa de revenire, vechiul FP si variabila locala sa fie eliminate din cadrul functiei.
+La executie, RET_VOID 1 restaureaza IP din ret[-1], restaureaza FP din oldFP[0] si coboara SP astfel incat 
+parametrul, adresa de revenire, vechiul FP si variabila locala sa fie eliminate din cadrul functiei.
