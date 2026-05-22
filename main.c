@@ -8,7 +8,7 @@
 
 int main()
 {
-	char *text = loadFile("test.c");
+	char *text = loadFile("tests/testgc.c");
 	Token *tokens = tokenize(text);
 	FILE *fout = fopen("tokens-output.txt", "w");
 	if(!fout) {
@@ -23,8 +23,12 @@ int main()
 	vmInit();
 	parse(tokens);
 	//showDomain(symTable, "global");
-	Instr *testCode=genTestProgramDouble();
-	run(testCode);
+	Symbol *symMain=findSymbolInDomain(symTable,"main");
+	if(!symMain)err("missing main function");
+	Instr *entryCode=NULL;
+	addInstr(&entryCode,OP_CALL)->arg.instr=symMain->fn.instr;
+	addInstr(&entryCode,OP_HALT);
+	run(entryCode);
 	dropDomain();
 	printf("\nCodul a fost scris corect.\n");
 	fclose(fout);

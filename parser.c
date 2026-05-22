@@ -6,6 +6,7 @@
 #include "parser.h"
 #include "ad.h"
 #include "at.h"
+#include "gc.h"
 #include "utils.h"
 
 Token *iTk;		// the iterator in the tokens list
@@ -377,7 +378,11 @@ bool fnDef(){
 						}
 					}
 				if(consume(RPAR)){
+					addInstr(&fn->fn.instr,OP_ENTER);
 					if(stmCompound(false)){
+						fn->fn.instr->arg.i=symbolsLen(fn->fn.locals);
+						if(fn->type.tb==TB_VOID)
+							addInstrWithInt(&fn->fn.instr,OP_RET_VOID,symbolsLen(fn->fn.params));
 						dropDomain();
 						owner=NULL;
 						return true;
@@ -462,14 +467,22 @@ bool stm(){
 				if(!canBeScalar(&rCond)){
 					tkerr("the if condition must be a scalar value");
 					}
+				addRVal(&owner->fn.instr,rCond.lval,&rCond.type);
+				Type intType={TB_INT,NULL,-1};
+				insertConvIfNeeded(lastInstr(owner->fn.instr),&rCond.type,&intType);
+				Instr *ifJF=addInstr(&owner->fn.instr,OP_JF);
 				if(consume(RPAR)){
 					if(stm()){
 						if(consume(ELSE)){
+							Instr *ifJMP=addInstr(&owner->fn.instr,OP_JMP);
+							ifJF->arg.instr=addInstr(&owner->fn.instr,OP_NOP);
 							if(stm()){
+								ifJMP->arg.instr=addInstr(&owner->fn.instr,OP_NOP);
 								return true;
 								}
 							tkerr("missing statement after else");
 							}
+						ifJF->arg.instr=addInstr(&owner->fn.instr,OP_NOP);
 						return true;
 						}
 					tkerr("missing statement after if condition");
@@ -486,12 +499,19 @@ bool stm(){
 	if(consume(WHILE)){
 		if(consume(LPAR)){
 			Ret rCond;
+			Instr *beforeWhileCond=lastInstr(owner->fn.instr);
 			if(expr(&rCond)){
 				if(!canBeScalar(&rCond)){
 					tkerr("the while condition must be a scalar value");
 					}
+				addRVal(&owner->fn.instr,rCond.lval,&rCond.type);
+				Type intType={TB_INT,NULL,-1};
+				insertConvIfNeeded(lastInstr(owner->fn.instr),&rCond.type,&intType);
+				Instr *whileJF=addInstr(&owner->fn.instr,OP_JF);
 				if(consume(RPAR)){
 					if(stm()){
+						addInstr(&owner->fn.instr,OP_JMP)->arg.instr=beforeWhileCond->next;
+						whileJF->arg.instr=addInstr(&owner->fn.instr,OP_NOP);
 						return true;
 						}
 					tkerr("missing statement after while condition");
@@ -517,9 +537,15 @@ bool stm(){
 			if(!convTo(&rExpr.type,&owner->type)){
 				tkerr("cannot convert the return expression type to the function return type");
 				}
+			addRVal(&owner->fn.instr,rExpr.lval,&rExpr.type);
+			insertConvIfNeeded(lastInstr(owner->fn.instr),&rExpr.type,&owner->type);
+			addInstrWithInt(&owner->fn.instr,OP_RET,symbolsLen(owner->fn.params));
 			}
 		else if(owner->type.tb!=TB_VOID){
 			tkerr("a non-void function must return a value");
+			}
+		else{
+			addInstrWithInt(&owner->fn.instr,OP_RET_VOID,symbolsLen(owner->fn.params));
 			}
 		if(consume(SEMICOLON)){
 			return true;
@@ -531,6 +557,7 @@ bool stm(){
 	consumedTk=startConsumed;
 	Ret rExpr;
 	if(expr(&rExpr)){
+		if(rExpr.type.tb!=TB_VOID)addInstr(&owner->fn.instr,OP_DROP);
 		if(consume(SEMICOLON)){
 			return true;
 			}
@@ -554,6 +581,7 @@ bool expr(Ret *r){
 bool exprAssign(Ret *r){
 	Token *start=iTk;
 	Token *startConsumed=consumedTk;
+	Instr *startInstr=owner?lastInstr(owner->fn.instr):NULL;
 	Ret rDst;
 	if(!startsWithTypeCast() && exprUnary(&rDst)){
 		if(consume(ASSIGN)){
@@ -573,6 +601,13 @@ bool exprAssign(Ret *r){
 				if(!convTo(&r->type,&rDst.type)){
 					tkerr("the assign source cannot be converted to destination");
 					}
+				addRVal(&owner->fn.instr,r->lval,&r->type);
+				insertConvIfNeeded(lastInstr(owner->fn.instr),&r->type,&rDst.type);
+				switch(rDst.type.tb){
+					case TB_INT:addInstr(&owner->fn.instr,OP_STORE_I);break;
+					case TB_DOUBLE:addInstr(&owner->fn.instr,OP_STORE_F);break;
+					default:break;
+					}
 				r->lval=false;
 				r->ct=true;
 				return true;
@@ -582,6 +617,7 @@ bool exprAssign(Ret *r){
 		}
 	iTk=start;
 	consumedTk=startConsumed;
+	if(owner)delInstrAfter(startInstr);
 	return exprOr(r);
 	}
 
@@ -713,10 +749,20 @@ bool exprRel(Ret *r){
 bool exprRelPrim(Ret *r){
 	if(consume(LESS)){
 		Ret right;
+		Instr *lastLeft=lastInstr(owner->fn.instr);
+		addRVal(&owner->fn.instr,r->lval,&r->type);
 		if(exprAdd(&right)){
 			Type tDst;
 			if(!arithTypeTo(&r->type,&right.type,&tDst)){
 				tkerr("invalid operand type for <");
+				}
+			addRVal(&owner->fn.instr,right.lval,&right.type);
+			insertConvIfNeeded(lastLeft,&r->type,&tDst);
+			insertConvIfNeeded(lastInstr(owner->fn.instr),&right.type,&tDst);
+			switch(tDst.tb){
+				case TB_INT:addInstr(&owner->fn.instr,OP_LESS_I);break;
+				case TB_DOUBLE:addInstr(&owner->fn.instr,OP_LESS_F);break;
+				default:break;
 				}
 			*r=makeBaseRet(TB_INT,false,true);
 			return exprRelPrim(r);
@@ -781,10 +827,20 @@ bool exprAdd(Ret *r){
 bool exprAddPrim(Ret *r){
 	if(consume(ADD)){
 		Ret right;
+		Instr *lastLeft=lastInstr(owner->fn.instr);
+		addRVal(&owner->fn.instr,r->lval,&r->type);
 		if(exprMul(&right)){
 			Type tDst;
 			if(!arithTypeTo(&r->type,&right.type,&tDst)){
 				tkerr("invalid operand type for +");
+				}
+			addRVal(&owner->fn.instr,right.lval,&right.type);
+			insertConvIfNeeded(lastLeft,&r->type,&tDst);
+			insertConvIfNeeded(lastInstr(owner->fn.instr),&right.type,&tDst);
+			switch(tDst.tb){
+				case TB_INT:addInstr(&owner->fn.instr,OP_ADD_I);break;
+				case TB_DOUBLE:addInstr(&owner->fn.instr,OP_ADD_F);break;
+				default:break;
 				}
 			*r=makeRet(tDst,false,true);
 			return exprAddPrim(r);
@@ -793,10 +849,20 @@ bool exprAddPrim(Ret *r){
 		}
 	if(consume(SUB)){
 		Ret right;
+		Instr *lastLeft=lastInstr(owner->fn.instr);
+		addRVal(&owner->fn.instr,r->lval,&r->type);
 		if(exprMul(&right)){
 			Type tDst;
 			if(!arithTypeTo(&r->type,&right.type,&tDst)){
 				tkerr("invalid operand type for -");
+				}
+			addRVal(&owner->fn.instr,right.lval,&right.type);
+			insertConvIfNeeded(lastLeft,&r->type,&tDst);
+			insertConvIfNeeded(lastInstr(owner->fn.instr),&right.type,&tDst);
+			switch(tDst.tb){
+				case TB_INT:addInstr(&owner->fn.instr,OP_SUB_I);break;
+				case TB_DOUBLE:addInstr(&owner->fn.instr,OP_SUB_F);break;
+				default:break;
 				}
 			*r=makeRet(tDst,false,true);
 			return exprAddPrim(r);
@@ -825,10 +891,20 @@ bool exprMul(Ret *r){
 bool exprMulPrim(Ret *r){
 	if(consume(MUL)){
 		Ret right;
+		Instr *lastLeft=lastInstr(owner->fn.instr);
+		addRVal(&owner->fn.instr,r->lval,&r->type);
 		if(exprCast(&right)){
 			Type tDst;
 			if(!arithTypeTo(&r->type,&right.type,&tDst)){
 				tkerr("invalid operand type for *");
+				}
+			addRVal(&owner->fn.instr,right.lval,&right.type);
+			insertConvIfNeeded(lastLeft,&r->type,&tDst);
+			insertConvIfNeeded(lastInstr(owner->fn.instr),&right.type,&tDst);
+			switch(tDst.tb){
+				case TB_INT:addInstr(&owner->fn.instr,OP_MUL_I);break;
+				case TB_DOUBLE:addInstr(&owner->fn.instr,OP_MUL_F);break;
+				default:break;
 				}
 			*r=makeRet(tDst,false,true);
 			return exprMulPrim(r);
@@ -837,10 +913,20 @@ bool exprMulPrim(Ret *r){
 		}
 	if(consume(DIV)){
 		Ret right;
+		Instr *lastLeft=lastInstr(owner->fn.instr);
+		addRVal(&owner->fn.instr,r->lval,&r->type);
 		if(exprCast(&right)){
 			Type tDst;
 			if(!arithTypeTo(&r->type,&right.type,&tDst)){
 				tkerr("invalid operand type for /");
+				}
+			addRVal(&owner->fn.instr,right.lval,&right.type);
+			insertConvIfNeeded(lastLeft,&r->type,&tDst);
+			insertConvIfNeeded(lastInstr(owner->fn.instr),&right.type,&tDst);
+			switch(tDst.tb){
+				case TB_INT:addInstr(&owner->fn.instr,OP_DIV_I);break;
+				case TB_DOUBLE:addInstr(&owner->fn.instr,OP_DIV_F);break;
+				default:break;
 				}
 			*r=makeRet(tDst,false,true);
 			return exprMulPrim(r);
@@ -997,6 +1083,8 @@ bool exprPrimary(Ret *r){
 				if(!convTo(&rArg.type,&param->type)){
 					tkerr("in call, cannot convert the argument type to the parameter type");
 					}
+				addRVal(&owner->fn.instr,rArg.lval,&rArg.type);
+				insertConvIfNeeded(lastInstr(owner->fn.instr),&rArg.type,&param->type);
 				param=param->next;
 				while(consume(COMMA)){
 					if(!expr(&rArg)){
@@ -1008,11 +1096,18 @@ bool exprPrimary(Ret *r){
 					if(!convTo(&rArg.type,&param->type)){
 						tkerr("in call, cannot convert the argument type to the parameter type");
 						}
+					addRVal(&owner->fn.instr,rArg.lval,&rArg.type);
+					insertConvIfNeeded(lastInstr(owner->fn.instr),&rArg.type,&param->type);
 					param=param->next;
 					}
 				if(consume(RPAR)){
 					if(param){
 						tkerr("too few arguments in function call");
+						}
+					if(s->fn.extFnPtr){
+						addInstr(&owner->fn.instr,OP_CALL_EXT)->arg.extFnPtr=s->fn.extFnPtr;
+						}else{
+						addInstr(&owner->fn.instr,OP_CALL)->arg.instr=s->fn.instr;
 						}
 					*r=makeRet(s->type,false,true);
 					return true;
@@ -1022,6 +1117,11 @@ bool exprPrimary(Ret *r){
 			else if(consume(RPAR)){
 				if(param){
 					tkerr("too few arguments in function call");
+					}
+				if(s->fn.extFnPtr){
+					addInstr(&owner->fn.instr,OP_CALL_EXT)->arg.extFnPtr=s->fn.extFnPtr;
+					}else{
+					addInstr(&owner->fn.instr,OP_CALL)->arg.instr=s->fn.instr;
 					}
 				*r=makeRet(s->type,false,true);
 				return true;
@@ -1033,6 +1133,28 @@ bool exprPrimary(Ret *r){
 		if(s->kind==SK_FN){
 			tkerr("a function can only be called");
 			}
+		if(s->kind==SK_VAR){
+			if(s->owner==NULL){
+				addInstr(&owner->fn.instr,OP_ADDR)->arg.p=s->varMem;
+				}else{
+				switch(s->type.tb){
+					case TB_INT:addInstrWithInt(&owner->fn.instr,OP_FPADDR_I,s->varIdx+1);break;
+					case TB_DOUBLE:addInstrWithInt(&owner->fn.instr,OP_FPADDR_F,s->varIdx+1);break;
+					default:break;
+					}
+				}
+			}
+		if(s->kind==SK_PARAM){
+			switch(s->type.tb){
+				case TB_INT:
+					addInstrWithInt(&owner->fn.instr,OP_FPADDR_I,s->paramIdx-symbolsLen(s->owner->fn.params)-1);
+					break;
+				case TB_DOUBLE:
+					addInstrWithInt(&owner->fn.instr,OP_FPADDR_F,s->paramIdx-symbolsLen(s->owner->fn.params)-1);
+					break;
+				default:break;
+				}
+			}
 		*r=makeRet(s->type,true,s->type.n>=0);
 		return true;
 		}
@@ -1040,10 +1162,12 @@ bool exprPrimary(Ret *r){
 	iTk=start;
 	consumedTk=startConsumed;
 	if(consume(INT)){
+		addInstrWithInt(&owner->fn.instr,OP_PUSH_I,consumedTk->i);
 		*r=makeBaseRet(TB_INT,false,true);
 		return true;
 		}
 	if(consume(DOUBLE)){
+		addInstrWithDouble(&owner->fn.instr,OP_PUSH_F,consumedTk->d);
 		*r=makeBaseRet(TB_DOUBLE,false,true);
 		return true;
 		}
