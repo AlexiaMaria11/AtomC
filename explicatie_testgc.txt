@@ -1,0 +1,150 @@
+// implementare recursiva pentru factorial
+int fact(int n){
+    if(n<3)return n;
+    return n*fact(n-1);
+    }
+
+void main(){
+    put_i(4.9);     // se afiseaza 4
+    put_i(fact(3)); // se afiseaza 6
+
+    int r;
+    r=1;
+    int i;
+    i=2;
+    while(i<5){
+        r=r*i;
+        i=i+1;
+        }
+    put_i(r);       // se afiseaza 24
+    }
+
+======================================================================
+FUNCTIA fact(int n)
+======================================================================
+
+Cadrul functiei:
+
+n[-2] ret[-1] oldFP[0]
+
+n[-2]     - Parametrul int n. paramIdx=0, symbolsLen(params)=1,
+            deci indexul in cadru = 0 - 1 - 1 = -2.
+ret[-1]   - Adresa de revenire salvata de OP_CALL.
+oldFP[0]  - Vechea valoare a lui FP, salvata de OP_ENTER.
+
+Nu exista variabile locale => ENTER 0.
+
+----------------------------------------------------------------------
+Instructiunile generate pentru fact:
+----------------------------------------------------------------------
+
+ENTER 0            // nicio variabila locala
+
+// if(n<3)
+FPADDR_I -2        // pune pe stiva adresa lui n (SK_PARAM)
+LOAD_I             // incarca valoarea lui n (addRVal: lval=true, INT)
+PUSH_I 3           // constanta 3
+LESS_I             // n < 3? (lasa 1 sau 0 pe stiva)
+JF label1          // daca fals (n>=3), sare la else
+
+// return n;  (ramura then a if-ului)
+FPADDR_I -2        // adresa lui n
+LOAD_I             // valoarea lui n
+RET 1              // returneaza valoarea, curata 1 parametru de pe stiva
+
+label1:
+NOP                // tinta saltului JF
+
+// return n*fact(n-1);
+FPADDR_I -2        // adresa lui n  -- operandul STANG al *
+LOAD_I             // incarca n (addRVal inainte de parsarea partii drepte)
+FPADDR_I -2        // adresa lui n  -- argumentul pentru fact
+LOAD_I             // incarca n (addRVal inainte de parsarea lui 1)
+PUSH_I 1           // constanta 1
+SUB_I              // n-1  (argumentul efectiv)
+CALL fact          // fact(n-1) -- rezultatul ramane pe stiva
+MUL_I              // n * fact(n-1)
+RET 1              // returneaza rezultatul, curata 1 parametru
+
+======================================================================
+FUNCTIA void main()
+======================================================================
+
+Cadrul functiei:
+
+ret[-1] oldFP[0] r[1] i[2]
+
+ret[-1]   - Adresa de revenire.
+oldFP[0]  - Vechea valoare a lui FP.
+r[1]      - Variabila locala int r (varIdx=0, deci FP[0+1]=FP[1]).
+i[2]      - Variabila locala int i (varIdx=1, deci FP[1+1]=FP[2]).
+
+main nu are parametri => RET_VOID 0 la sfarsit.
+
+----------------------------------------------------------------------
+Instructiunile generate pentru main:
+----------------------------------------------------------------------
+
+ENTER 2            // 2 variabile locale: r[1] si i[2]
+
+// put_i(4.9)
+PUSH_F 4.9         // constanta double 4.9
+CONV_F_I           // conversie double->int (inserat de insertConvIfNeeded
+                   // dupa PUSH_F, pentru ca param-ul put_i este int)
+CALL_EXT put_i     // apel extern; tipul returnat e void => fara DROP
+
+// put_i(fact(3))
+PUSH_I 3           // argumentul pentru fact
+CALL fact          // fact(3) = 6; rezultatul int ramane pe stiva
+CALL_EXT put_i     // afiseaza 6; tipul returnat e void => fara DROP
+
+// r=1
+FPADDR_I 1         // adresa lui r (varIdx+1 = 1)
+PUSH_I 1           // valoarea 1
+STORE_I            // r = 1  (lasa 1 pe stiva)
+DROP               // expr-statement cu tip int => DROP
+
+// i=2
+FPADDR_I 2         // adresa lui i (varIdx+1 = 2)
+PUSH_I 2
+STORE_I            // i = 2
+DROP
+
+// while(i<5)  -- conditia
+condStart:         // = beforeWhileCond->next
+FPADDR_I 2         // adresa lui i
+LOAD_I             // valoarea lui i
+PUSH_I 5
+LESS_I             // i < 5?
+JF endWhile        // daca fals, iese din bucla
+
+// r=r*i
+FPADDR_I 1         // adresa lui r  (destinatie atribuire)
+FPADDR_I 1         // r  (operand stang al *)
+LOAD_I             // incarca r
+FPADDR_I 2         // i  (operand drept al *)
+LOAD_I             // incarca i
+MUL_I              // r*i
+STORE_I            // r = r*i  (lasa valoarea pe stiva)
+DROP               // expr-statement => DROP
+
+// i=i+1
+FPADDR_I 2         // adresa lui i  (destinatie atribuire)
+FPADDR_I 2         // i  (operand stang al +)
+LOAD_I             // incarca i
+PUSH_I 1
+ADD_I              // i+1
+STORE_I            // i = i+1
+DROP
+
+JMP condStart      // salt inapoi la conditia while
+
+endWhile:
+NOP                // tinta saltului JF
+
+// put_i(r)
+FPADDR_I 1         // adresa lui r
+LOAD_I             // incarca r (addRVal: lval=true, INT)
+CALL_EXT put_i     // afiseaza 24
+
+RET_VOID 0         // main se termina, 0 parametri de curatat
